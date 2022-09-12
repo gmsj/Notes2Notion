@@ -10,11 +10,13 @@ def generateMarkdown(json_object):
     
     page.append(title('Destaques', 3))
     for item in json_object.get('Destaques'):
-        page.append(quote(item.get('Registro')))
+        index = item.get('Local').split('-')[0]
+        page.append(quote(item.get('Registro') + f' [{index}]'))
 
     page.append(title('Notas', 3))
     for item in json_object.get('Notas'):
-        page.append(quote(item.get('Registro')))
+        index = item.get('Local').split('-')[0]
+        page.append(quote(item.get('Registro') + f' [{index}]'))
     
     return ''.join(page)
 

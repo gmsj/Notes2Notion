@@ -1,84 +1,17 @@
-import markdownNotion
+from utils import markdown_builder
+from utils import file_manipulation
 
 print()
-print('Put the memes file in the same directory as the script!')
+print('Connect your kindle device to the computer and wait for your storage to be recognized')
+print()
 input('Press enter when done... ')
+print()
 
-try:
-    file = open('My Clippings.txt', mode='r', encoding='utf-8-sig')
-    lines = file.readlines()
-    file.close()
-except Exception as error:
-    raise Exception(error)
+# Copy clippings file to current directory
+file_manipulation.get_clippings_file()
 
-clean_lines = []
-for i in range(0, len(lines)):
-    tmp = lines[i].replace('\n', '').strip()
-    tmp = ''.join(char for char in tmp if char.isprintable())
-    if tmp != '':
-        clean_lines.append(tmp)
-
-
-initial_split = []
-index_control = 0
-for i in range(0, len(clean_lines)):
-    if clean_lines[i] == '==========':
-        initial_split.append(clean_lines[index_control:i])
-        index_control = i + 1
-
-notes_dict = {}
-count = 0
-for item in initial_split:
-    if item[0] not in notes_dict:
-        count = count + 1
-        notes_dict[item[0]] = []
-    notes_dict[item[0]].append(item[1:])
-
-json_notes = []
-dict_keys = notes_dict.keys()
-for item in dict_keys:
-    book = {
-        'Titulo': item,
-        'Registros': len(notes_dict[item]),
-        'Marcadores': [],
-        'Destaques': [],
-        'Notas': []
-    }
-    for register in notes_dict[item]:
-        try:
-            if register[0].startswith('- Sua nota'):
-                tmp = register[0].replace('- Sua nota na', '')
-                tmp = tmp[0: tmp.find('| Ad')]
-                tmp = tmp.strip()
-                book['Notas'].append({
-                        'Local': tmp,
-                        'Registro': register[1]
-                    })
-            elif register[0].startswith('- Seu destaque'):
-                tmp = register[0].replace('- Seu destaque na', '')
-                tmp = tmp.replace('- Seu destaque ou', '')
-                tmp = tmp[0: tmp.find('| Ad')]
-                tmp = tmp.strip()
-                if len(register) > 1:
-                    book['Destaques'].append({
-                        'Local': tmp,
-                        'Registro': register[1]
-                    })
-                else:
-                    book['Destaques'].append({
-                        'Local': tmp,
-                        'Registro': 'Imagem'
-                    })
-            elif register[0].startswith('- Seu marcador'):
-                tmp = register[0].replace('- Seu marcador na ', '')
-                tmp = tmp[0: tmp.find(' |')]
-                book['Marcadores'].append(tmp)
-            else:
-                print(f'Algum problema ao ler a entrada: [{register[0]}]')
-        except Exception as error:
-            print(f'Registro com problema: [{register[0]}]')
-            raise
-    json_notes.append(book)
+notes_dict = file_manipulation.load_clippings_file()
+json_notes = file_manipulation.raw_clippings_to_json(notes_dict, debug=True)
 
 print('Select the number of the book you want to export the annotations:', '\n')
 count = 0
@@ -91,8 +24,8 @@ number = int(input('Number: '))
 if number < 0 or number > len(json_notes):
     raise Exception('Number of book is out of range')
 
-markdown_txt = markdownNotion.generateMarkdown(json_notes[number])
-file = open(json_notes[number].get('Titulo') + '_markdown.md', 'w')
+markdown_txt = markdown_builder.generateMarkdown(json_notes[number])
+file = open('Exported/' + json_notes[number].get('Titulo') + '_markdown.md', 'w')
 file.write(markdown_txt)
 file.close()
 
